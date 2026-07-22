@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEXLE</title>
+    <script src="index.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #202020;
+            color: #eee;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            margin: 0 0 0.25rem;
+            font-size: 2rem;
+            letter-spacing: 0.1em;
+        }
+
+        .subheader {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        #hint {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #444;
+            margin: 1.5rem auto;
+            max-width: 300px;
+        }
+
+        .Row {
+            display: flex;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .Box {
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .Box.correct { background: #67320b; border-color: #67320b; }
+
+        .Keyboard {
+            margin-top: 2rem;
+        }
+
+        .KeyboardRow {
+            display: flex;
+            justify-content: center;
+            gap: 0.3rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .Key {
+            min-width: 2rem;
+            padding: 0.6rem 0.5rem;
+            background: #333;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<h1>SEXLE</h1>
+<p class="subheader">#1</p>
+<p id="hint" class="hidden">PLACEHOLDER</p>
+<hr>
+
+<div id="board"></div>
+
+
+<div class="Keyboard">
+    <div class="KeyboardRow">
+        <div class="Key">Q</div>
+        <div class="Key">W</div>
+        <div class="Key">E</div>
+        <div class="Key">R</div>
+        <div class="Key">T</div>
+        <div class="Key">Y</div>
+        <div class="Key">U</div>
+        <div class="Key">I</div>
+        <div class="Key">O</div>
+        <div class="Key">P</div>
+    </div>
+    <div class="KeyboardRow">
+        <div class="Key">A</div>
+        <div class="Key">S</div>
+        <div class="Key">D</div>
+        <div class="Key">F</div>
+        <div class="Key">G</div>
+        <div class="Key">H</div>
+        <div class="Key">J</div>
+        <div class="Key">K</div>
+        <div class="Key">L</div>
+    </div>
+    <div class="KeyboardRow">
+        <div class="Key">Enter</div>
+        <div class="Key">Z</div>
+        <div class="Key">X</div>
+        <div class="Key">C</div>
+        <div class="Key">V</div>
+        <div class="Key">B</div>
+        <div class="Key">N</div>
+        <div class="Key">M</div>
+        <div class="Key">⌫</div>
+    </div>
+</div>
+
+</body>
+
+<script src="shake.js"></script>
+
+</html>
