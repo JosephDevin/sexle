@@ -85,7 +85,7 @@ function updateKeyboard() {
 function handleKey(key) {
     if (gameOver) return;
 
-    if (key === 'Enter' && currentGuess.length === 3) {
+    if (key === 'Enter' && currentGuess.length === 3 && !gameOver) {
         submitGuess();
     } else if (key === '⌫' || key === 'Backspace') {
         currentGuess = currentGuess.slice(0, -1);
@@ -131,6 +131,8 @@ function submitGuess() {
     // WORD CORRECT
     else if (currentGuess === 'sex') {
         colorLastRow(currentGuess);
+
+        gameOver = true;
 
         //Confettis
         const duration = 5000,
@@ -219,7 +221,20 @@ function initInput() {
     });
 
     document.querySelectorAll('.Key[data-key]').forEach(keyEl => {
-        keyEl.addEventListener('click', () => handleKey(keyEl.dataset.key));
+        let recentTouch = false;
+
+        keyEl.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            recentTouch = true;
+            handleKey(keyEl.dataset.key);
+            // clear the flag after the synthetic click window has passed
+            setTimeout(() => { recentTouch = false; }, 400);
+        }, { passive: false });
+
+        keyEl.addEventListener('click', () => {
+            if (recentTouch) return; // this click is the ghost that follows the touch above
+            handleKey(keyEl.dataset.key);
+        });
     });
 }
 
