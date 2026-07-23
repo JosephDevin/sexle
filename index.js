@@ -1,12 +1,14 @@
 const WORD_LENGTH = 3;
 let wordList = [];
-let currentGuess = '';
+let currentGuess = [''];
 let lastWord = '';
 let gameOver = false;
 
+let dailyWord;
 let score = 0;
 
 let hint;
+let copy;
 
 /* ==========================
 LOADS THE WORD AND DISPLAY IT
@@ -43,7 +45,6 @@ function pickDailyWord(list) {
     rowStart.className = 'Row';
 
     let letters = list[index];
-    console.log(letters);
 
     for (let j = 0; j < WORD_LENGTH; j++) {
         const box = document.createElement('div');
@@ -76,32 +77,36 @@ function updateKeyboard() {
     const guessRow = rows[score + 1]; // score tracks the index of the active guess row
     if (!guessRow) return;
 
+    const guess = currentGuess[currentGuess.length - 1];
     const boxes = guessRow.getElementsByClassName('Box');
     for (let j = 0; j < WORD_LENGTH; j++) {
-        boxes[j].textContent = currentGuess[j] ? currentGuess[j].toUpperCase() : '';
+        boxes[j].textContent = guess[j] ? guess[j].toUpperCase() : '';
     }
 }
 
 function handleKey(key) {
     if (gameOver) return;
 
-    if (key === 'Enter' && currentGuess.length === 3 && !gameOver) {
+    const guess = currentGuess[currentGuess.length - 1];
+
+    if (key === 'Enter' && guess.length === 3 && !gameOver) {
         submitGuess();
     } else if (key === '⌫' || key === 'Backspace') {
-        currentGuess = currentGuess.slice(0, -1);
+        currentGuess[currentGuess.length - 1] = guess.slice(0, -1);
         updateKeyboard();
-    } else if (/^[a-zA-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
-        currentGuess += key.toLowerCase();
+    } else if (/^[a-zA-Z]$/.test(key) && guess.length < WORD_LENGTH) {
+        currentGuess[currentGuess.length - 1] = guess + key.toLowerCase();
         updateKeyboard();
     }
 }
 
 // GUESS
 function submitGuess() {
+    const guess = currentGuess[currentGuess.length - 1];
 
     // WORD NOT IN LIST
-    if (!wordList.includes(currentGuess)) {
-        currentGuess = '';
+    if (!wordList.includes(guess)) {
+        currentGuess[currentGuess.length - 1] = '';
         if (window.triggerShake) {
             window.triggerShake({
                 tint: 'rgba(74, 222, 128, 0.0)',
@@ -114,8 +119,8 @@ function submitGuess() {
     }
 
     // WORD TOO DIFFERENT
-    else if (distance(lastWord, currentGuess) > 1) {
-        currentGuess = '';
+    else if (distance(lastWord, guess) > 1) {
+        currentGuess[currentGuess.length - 1] = '';
         updateKeyboard();
         if (window.triggerShake) {
             window.triggerShake({
@@ -129,10 +134,14 @@ function submitGuess() {
     }
 
     // WORD CORRECT
-    else if (currentGuess === 'sex') {
-        colorLastRow(currentGuess);
+    else if (guess === 'sex') {
+        colorLastRow(guess);
 
         gameOver = true;
+
+        let copy = document.getElementById("copy");
+        copy.classList.remove('hidden');
+        score+=1;
 
         //Confettis
         const duration = 5000,
@@ -152,7 +161,6 @@ function submitGuess() {
 
             const particleCount = 50 * (timeLeft / duration);
 
-            // since particles fall down, start a bit higher than random
             confetti(
                 Object.assign({}, defaults, {
                     particleCount,
@@ -169,14 +177,13 @@ function submitGuess() {
     }
     // WORD ALLOWED
     else {
-        colorLastRow(currentGuess);
+        colorLastRow(guess);
         score += 1;
         addRow(document.getElementById('board'));
-        lastWord = currentGuess;
-        currentGuess = '';
+        lastWord = guess;
+        currentGuess.push('');
     }
 }
-
 /* ======================================
  DATE
  ======================================== */
@@ -186,7 +193,6 @@ const START_DATE = new Date('2026-07-20'); // pick whatever day #1 should be
 
 function getPuzzleNumber() {
     const today = new Date();
-    // zero out time components so partial days don't cause off-by-one issues
     const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
     const startUTC = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
 
@@ -201,6 +207,39 @@ function displayPuzzleNumber() {
     subheader.textContent = `#${getPuzzleNumber()}`;
 }
 
+/* ======================================
+ COPY RESULTS
+ ======================================== */
+
+async function getResults() {
+    const path = solveSexle(wordList, dailyWord);
+    let bestScore = path.length - 1;
+
+    let results = 'Sexle #' + getPuzzleNumber() + ' ' + score + '/' + bestScore + '\n';
+
+    for (let j = 0; j < currentGuess.length; j++) {
+        for (let k = 0; k < 3; k++) {
+            if (currentGuess[j][k] === 's' || currentGuess[j][k] === 'e' || currentGuess[j][k] === 'x') {
+                results += '🟥'
+            } else {
+                results += '⬜'
+            }
+        }
+        results += '\n'
+    }
+
+    results += '\nhttps://sexle.netlify.app/'
+
+    try {
+        await navigator.clipboard.writeText(results);
+    } catch (err) {
+        console.error('Copy failed:', err);
+    }
+
+}
+
+
+
 
 
 /* ======================================
@@ -208,9 +247,14 @@ function displayPuzzleNumber() {
  ======================================== */
 async function init() {
     hint = document.getElementById('hint');
+    copy = document.getElementById('copy')
+
+    copy.onclick = function () {
+        console.log(getResults());
+    }
 
     await loadWords();
-    pickDailyWord(wordList);
+    dailyWord = pickDailyWord(wordList);
     displayPuzzleNumber();
     initInput();
 }
@@ -239,6 +283,7 @@ function initInput() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 

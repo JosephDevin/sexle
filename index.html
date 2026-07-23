@@ -33,6 +33,12 @@
             font-size: 0.85rem;
         }
 
+        #copy {
+            color: #888;
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+
         hr {
             border: none;
             border-top: 1px solid #444;
@@ -60,7 +66,7 @@
             text-transform: uppercase;
         }
 
-        .Box.correct { background: #67320b; border-color: #67320b; }
+        .Box.correct { background: #ED3140; border-color: #ED3140; }
 
         .Keyboard {
             margin-top: 2rem;
@@ -131,11 +137,14 @@
         <div class="Key" data-key="M">M</div>
         <div class="Key" data-key="⌫">⌫</div>
     </div>
+
+    <button id="copy" class="hidden">Copy results</button>
 </div>
 
 </body>
 
 <script src="shake.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+<script src="solve.js"></script>
 
 </html>
