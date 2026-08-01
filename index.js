@@ -8,7 +8,10 @@ let dailyWord;
 let score = 0;
 
 let hint;
-let copy;
+let dialog;
+
+let path;
+let bestScore;
 
 /* ==========================
 LOADS THE WORD AND DISPLAY IT
@@ -39,7 +42,6 @@ function pickDailyWord(list) {
     const rand = mulberry32(seed);
     const index = Math.floor(rand() * list.length);
 
-    // LOADS INTO BOXES
     const board = document.getElementById('board');
     const rowStart = document.createElement('div');
     rowStart.className = 'Row';
@@ -74,7 +76,7 @@ function pickDailyWord(list) {
 
 function updateKeyboard() {
     const rows = document.getElementsByClassName('Row');
-    const guessRow = rows[score + 1]; // score tracks the index of the active guess row
+    const guessRow = rows[score + 1];
     if (!guessRow) return;
 
     const guess = currentGuess[currentGuess.length - 1];
@@ -103,79 +105,44 @@ function handleKey(key) {
 // GUESS
 function submitGuess() {
     const guess = currentGuess[currentGuess.length - 1];
+    let streak = parseInt(localStorage.getItem("streak")) + 1;
 
-    // WORD NOT IN LIST
+    if (guess === 'sex' && distance(lastWord, guess) === 1) {
+        colorLastRow(guess);
+        gameOver = true;
+        score += 1;
+        launchConfetti();
+        openResultsDialog(dailyWord, score, 0);
+
+        localStorage.setItem("streak", streak.toString());
+
+        localStorage.setItem("completedPuzzle", JSON.stringify({
+            puzzle: getPuzzleNumber(),
+            score: score,
+            guesses: currentGuess
+        }));
+
+        return;
+    }
+
+
     if (!wordList.includes(guess)) {
         currentGuess[currentGuess.length - 1] = '';
         if (window.triggerShake) {
-            window.triggerShake({
-                tint: 'rgba(74, 222, 128, 0.0)',
-                intensity: '5px'
-            });
+            window.triggerShake({ tint: 'rgba(74, 222, 128, 0.0)', intensity: '5px' });
         }
-
         hint.innerText = 'Word is not in the list.';
         hint.classList.remove('hidden');
     }
-
-    // WORD TOO DIFFERENT
     else if (distance(lastWord, guess) > 1) {
         currentGuess[currentGuess.length - 1] = '';
         updateKeyboard();
         if (window.triggerShake) {
-            window.triggerShake({
-                tint: 'rgba(74, 222, 128, 0.0)',
-                intensity: '5px'
-            });
+            window.triggerShake({ tint: 'rgba(74, 222, 128, 0.0)', intensity: '5px' });
         }
-
         hint.innerText = 'Not one letter is different.';
         hint.classList.remove('hidden');
     }
-
-    // WORD CORRECT
-    else if (guess === 'sex') {
-        colorLastRow(guess);
-
-        gameOver = true;
-
-        let copy = document.getElementById("copy");
-        copy.classList.remove('hidden');
-        score+=1;
-
-        //Confettis
-        const duration = 5000,
-            animationEnd = Date.now() + duration,
-            defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            const particleCount = 50 * (timeLeft / duration);
-
-            confetti(
-                Object.assign({}, defaults, {
-                    particleCount,
-                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-                })
-            );
-            confetti(
-                Object.assign({}, defaults, {
-                    particleCount,
-                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-                })
-            );
-        }, 250);
-    }
-    // WORD ALLOWED
     else {
         colorLastRow(guess);
         score += 1;
@@ -184,79 +151,84 @@ function submitGuess() {
         currentGuess.push('');
     }
 }
-/* ======================================
- DATE
- ======================================== */
 
 
-const START_DATE = new Date('2026-07-20'); // pick whatever day #1 should be
+function launchConfetti() {
+    const duration = 5000,
+        animationEnd = Date.now() + duration,
+        defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-function getPuzzleNumber() {
-    const today = new Date();
-    const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-    const startUTC = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
-
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const daysElapsed = Math.floor((todayUTC - startUTC) / msPerDay);
-
-    return daysElapsed + 1; // day 0 = puzzle #1
-}
-
-function displayPuzzleNumber() {
-    const subheader = document.querySelector('.subheader');
-    subheader.textContent = `#${getPuzzleNumber()}`;
-}
-
-/* ======================================
- COPY RESULTS
- ======================================== */
-
-async function getResults() {
-    const path = solveSexle(wordList, dailyWord);
-    let bestScore = path.length - 1;
-
-    let results = 'Sexle #' + getPuzzleNumber() + ' ' + score + '/' + bestScore + '\n';
-
-    for (let j = 0; j < currentGuess.length; j++) {
-        for (let k = 0; k < 3; k++) {
-            if (currentGuess[j][k] === 's' || currentGuess[j][k] === 'e' || currentGuess[j][k] === 'x') {
-                results += '🟥'
-            } else {
-                results += '⬜'
-            }
-        }
-        results += '\n'
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
     }
 
-    results += '\nhttps://sexle.netlify.app/'
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
 
-    try {
-        await navigator.clipboard.writeText(results);
-    } catch (err) {
-        console.error('Copy failed:', err);
-    }
+        const particleCount = 50 * (timeLeft / duration);
 
+        confetti(Object.assign({}, defaults, {
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        }));
+        confetti(Object.assign({}, defaults, {
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        }));
+    }, 250);
+
+    const d = document.getElementById('results');
+    console.log('open:', d.open);
 }
 
+/* ======================================
+ RESULTS DIALOG
+ ======================================== */
 
+function openResultsDialog(word, guesses, best) {
+    const bestScore = path.length - 1;
+    let streak = parseInt(localStorage.getItem("streak")) + 1;
 
+    document.getElementById('wordTransition').innerHTML =
+        `${word.toUpperCase()} <span>to</span> SEX`;
+    document.getElementById('guessCount').textContent = `${guesses} guesses.`;
+    document.getElementById('bestCount').textContent = `${bestScore} guesses.`;
+    document.getElementById('streak').textContent = `${streak}`;
+    document.getElementById('table').textContent = buildResultsTable();
+    dialog.showModal();
 
+    dialog.tabIndex = -1;
+    dialog.focus();
+}
 
 /* ======================================
  INIT
  ======================================== */
 async function init() {
     hint = document.getElementById('hint');
-    copy = document.getElementById('copy')
-
-    copy.onclick = function () {
-        console.log(getResults());
-    }
 
     await loadWords();
     dailyWord = pickDailyWord(wordList);
     displayPuzzleNumber();
     initInput();
+
+    path = solveSexle(wordList, dailyWord);
+    bestScore = path.length - 1;
+
+    if (localStorage.getItem("streak") == null) {
+        localStorage.setItem("streak", 0);
+    }
+
+    initDialog();
+
+    const saved = JSON.parse(localStorage.getItem("completedPuzzle") || "null");
+    if (saved && saved.puzzle === getPuzzleNumber()) {
+        gameOver = true;
+        score = saved.score;
+        currentGuess = saved.guesses;
+        openResultsDialog(dailyWord, score, 0);
+    }
 }
 
 function initInput() {
@@ -271,12 +243,11 @@ function initInput() {
             e.preventDefault();
             recentTouch = true;
             handleKey(keyEl.dataset.key);
-            // clear the flag after the synthetic click window has passed
             setTimeout(() => { recentTouch = false; }, 400);
         }, { passive: false });
 
         keyEl.addEventListener('click', () => {
-            if (recentTouch) return; // this click is the ghost that follows the touch above
+            if (recentTouch) return;
             handleKey(keyEl.dataset.key);
         });
     });
@@ -286,7 +257,16 @@ document.addEventListener('DOMContentLoaded', init);
 
 
 
+function initDialog() {
+    dialog = document.getElementById('results');
 
+    document.getElementById('closeBtn').addEventListener('click', () => dialog.close());
+    document.getElementById('copyBtn').addEventListener('click', handleCopyClick);
+
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) dialog.close();
+    });
+}
 
 
 
@@ -306,7 +286,7 @@ document.addEventListener('DOMContentLoaded', init);
 function colorLastRow(guess) {
     const target = ['s', 'e', 'x'];
     const rows = document.getElementsByClassName('Row');
-    const row = rows[score + 1]; // the row currentGuess was just typed into
+    const row = rows[score + 1];
     if (!row) return;
 
     const boxes = row.getElementsByClassName('Box');
@@ -335,10 +315,76 @@ function distance(wordA, wordB) {
 
     let diffCount = 0;
     for (let i = 0; i < wordA.length; i++) {
-        if (wordA[i] !== wordB[i]) {
-            diffCount++;
+        if (wordA[i] !== wordB[i]) diffCount++;
+    }
+    return diffCount;
+}
+
+/* ======================================
+ DATE
+ ======================================== */
+
+const START_DATE = new Date('2026-07-20');
+
+function getPuzzleNumber() {
+    const today = new Date();
+    const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const startUTC = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysElapsed = Math.floor((todayUTC - startUTC) / msPerDay);
+
+    return daysElapsed + 1;
+}
+
+function displayPuzzleNumber() {
+    const subheader = document.querySelector('.subheader');
+    subheader.textContent = `#${getPuzzleNumber()}`;
+}
+
+/* ======================================
+ COPY RESULTS
+ ======================================== */
+
+function buildResultsText() {
+    let results = 'Sexle #' + getPuzzleNumber() + ' ' + score + '/' + bestScore + '\n';
+
+    results += buildResultsTable();
+
+    results += '\nhttps://sexle.netlify.app/';
+    return results;
+}
+
+function buildResultsTable() {
+    let results = '⬜⬜⬜\n';
+
+    for (let j = 0; j < currentGuess.length; j++) {
+        for (let k = 0; k < 3; k++) {
+            if (currentGuess[j][k] === 's' || currentGuess[j][k] === 'e' || currentGuess[j][k] === 'x') {
+                results += '🟥';
+            } else {
+                results += '⬜';
+            }
         }
+        results += '\n';
     }
 
-    return diffCount;
+    return results;
+}
+
+async function handleCopyClick() {
+    const feedback = document.getElementById('copyFeedback');
+    const results = buildResultsText();
+
+    try {
+        await navigator.clipboard.writeText(results);
+        feedback.textContent = 'Copied!';
+        feedback.classList.remove('error');
+    } catch (err) {
+        console.error('Copy failed:', err);
+        feedback.textContent = 'Copy failed.';
+        feedback.classList.add('error');
+    }
+
+    setTimeout(() => { feedback.textContent = ''; }, 2000);
 }

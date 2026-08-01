@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEXLE</title>
-    <script src="index.js"></script>
+    <script src="index.js" defer></script>
     <style>
         * { box-sizing: border-box; }
 
@@ -90,6 +90,61 @@
         }
 
         .hidden { display: none !important; }
+
+        dialog#results {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 2rem 1.5rem;
+            max-width: 90vw;
+            background-color: #2a2a2a;
+            color: #eee;
+        }
+
+        dialog#results::backdrop {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -0.5rem;
+            right: -0.5rem;
+            background: none;
+            border: none;
+            color: #eee;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        #table {
+            white-space: pre-line;
+        }
+
+        .word-transition {
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            margin: 0.5rem 0 1.5rem;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: #6cb4ff;
+            text-decoration: underline;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .copy-feedback {
+            display: block;
+            font-size: 0.85rem;
+            color: #4ade80;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -137,9 +192,23 @@
         <div class="Key" data-key="M">M</div>
         <div class="Key" data-key="⌫">⌫</div>
     </div>
-
-    <button id="copy" class="hidden">Copy results</button>
 </div>
+
+<dialog id="results">
+    <div class="modal-content">
+        <button id="closeBtn" class="modal-close">✕</button>
+        <h1 class="modal-title">Congratulations!</h1>
+        <p id="wordTransition" class="word-transition">WHAM <span>to</span> POOP</p>
+        <div class="modal-results">
+            <p>You used <b id="guessCount">0 guesses.</b></p>
+            <p>Best solution: <b id="bestCount">0 guesses.</b></p>
+            <p>You have a streak of <b id="streak"></b></p>
+            <p id="table">RESULTS TABLE</p>
+            <button id="copyBtn" class="link-btn">Copy results</button>
+            <span id="copyFeedback" class="copy-feedback"></span>
+        </div>
+    </div>
+</dialog>
 
 </body>
 
